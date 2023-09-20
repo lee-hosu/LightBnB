@@ -18,16 +18,7 @@ const pool = new Pool({
  * @param {String} email The email of the user.
  * @return {Promise<{}>} A promise to the user.
  */
-// const getUserWithEmail = function (email) {
-//   let resolvedUser = null;
-//   for (const userId in users) {
-//     const user = users[userId];
-//     if (user && user.email.toLowerCase() === email.toLowerCase()) {
-//       resolvedUser = user;
-//     }
-//   }
-//   return Promise.resolve(resolvedUser);
-// };
+
 const getUserWithEmail = function (email) {
   const queryString = `
   SELECT *
@@ -57,9 +48,7 @@ const getUserWithEmail = function (email) {
  * @param {string} id The id of the user.
  * @return {Promise<{}>} A promise to the user.
  */
-// const getUserWithId = function (id) {
-//   return Promise.resolve(users[id]);
-// };
+
 const getUserWithId = function (id) {
   // Use a database query to fetch the user by id
   const queryString = `
@@ -89,12 +78,7 @@ const getUserWithId = function (id) {
  * @param {{name: string, password: string, email: string}} user
  * @return {Promise<{}>} A promise to the user.
  */
-// const addUser = function (user) {
-//   const userId = Object.keys(users).length + 1;
-//   user.id = userId;
-//   users[userId] = user;
-//   return Promise.resolve(user);
-// };
+
 const addUser = function (user) {
   // Use a database query to insert a new user
   const queryString = `
@@ -159,38 +143,29 @@ const getAllReservations = function (guest_id, limit = 10) {
  * @param {*} limit The number of results to return.
  * @return {Promise<[{}]>}  A promise to the properties.
  */
-// const getAllProperties = function (options, limit = 10) {
-//   const limitedProperties = {};
-//   for (let i = 1; i <= limit; i++) {
-//     limitedProperties[i] = properties[i];
-//   }
-//   return Promise.resolve(limitedProperties);
-// };
 
 const getAllProperties = function (options, limit = 100) {
-  // 1
+  // Setup an array to hold any parameters that may be available for the query
   const queryParams = [];
 
-  // 2
+  // Start the query with all information that comes before the WHERE clause.
   let queryString = `
   SELECT properties.*, avg(property_reviews.rating) as average_rating
   FROM properties
   JOIN property_reviews ON properties.id = property_id
   `;
 
-  // 3
+  // Check if a city, owner_id or price_per_night has been passed in as an option. Add them to the params array and create a WHERE clause
   if (options.city) {
     queryParams.push(`%${options.city}%`);
     queryString += `WHERE city iLIKE $${queryParams.length} `;
   }
 
-  // 4
   if (options.owner_id) {
     queryParams.push(`${options.owner_id}`);
     queryString += `WHERE owner_id = $${queryParams.length} `;
   }
 
-  // 5
   if (options.minimum_price_per_night && options.maximum_price_per_night) {
     if (queryParams.length === 0) {
       queryParams.push(`${options.minimum_price_per_night * 100}`);
@@ -205,7 +180,6 @@ const getAllProperties = function (options, limit = 100) {
     }
   }
 
-  // 6
   if (options.minimum_price_per_night && !options.maximum_price_per_night) {
     if (queryParams.length === 0) {
       queryParams.push(`${options.minimum_price_per_night * 100}`);
@@ -216,7 +190,6 @@ const getAllProperties = function (options, limit = 100) {
     }
   }
 
-  // 7
   if (!options.minimum_price_per_night && options.maximum_price_per_night) {
     if (queryParams.length === 0) {
       queryParams.push(`${options.maximum_price_per_night * 100}`);
@@ -236,12 +209,15 @@ const getAllProperties = function (options, limit = 100) {
     queryString += `HAVING avg(rating) >= $${queryParams.length} `;
   }
 
-  // 4
+  //
   queryParams.push(limit);
   queryString += `
   ORDER BY cost_per_night
   LIMIT $${queryParams.length};
   `;
+
+  // Console log everything just to make sure we've done it right.
+  console.log(queryString, queryParams);
 
   // Run and return the query
   return pool.query(queryString, queryParams).then((result) => result.rows);
